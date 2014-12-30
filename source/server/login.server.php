@@ -1,5 +1,7 @@
 <?php
 session_start();
+require_once(dirname(dirname(__FILE__)) . '/config.php');
+require_once(BASE_PATH . "/inc/conn.php");
 
 if ( !isset($_POST['action']) ) {
     return;
@@ -31,8 +33,6 @@ if ( $action == 'login' ) {
 		exit;
 	}
 
-	require_once("../inc/conn.php");
-
 	$conn = new Csdb();
 	$query = "SELECT `uid`,`password` FROM `cs_user` WHERE `name`='$name';";
 	$result = $conn->query($query);
@@ -53,8 +53,20 @@ if ( $action == 'login' ) {
 		$_SESSION['wrong_times'] = 0;
 		$_SESSION['identity'] = crypt($row['uid'],'cs_linux_2012');
 		$_SESSION['uid'] = $row['uid'];
-		//setcookie('uid',$row['uid'],time()+3600);
-		print 'true';
+		$sql = "SELECT * FROM cs_online WHERER uid=" . $row['uid'] . ";";
+		$result = $conn->query($sql);
+		if ( $result->num_rows ) {
+			$time = time();
+			$sql1 = "UPDATE cs_online SET time=" . $time . " WHERE uid=" . $row['uid'] . ";";
+			$conn->query($sql1);
+		}
+		else {
+			$time = time();
+			$sql2 = "INSERT INTO cs_online values(" . $row['uid'] . "," . $time . ";";
+			$conn->query($sql2);
+		}
+	//	setcookie('uid',$row['uid'],time()+3600);
+		print 'true&'.$row['uid'];
 	}else{
 		print 'false5';
 		if( isset($_SESSION['wrong_times']) )
